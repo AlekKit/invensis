@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invensis - Квиз за Клима Уреди</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-red: #E30613;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .liquid-blob {
+            position: fixed;
+            z-index: -1;
+            filter: blur(60px);
+            opacity: 0.4;
+            border-radius: 50%;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-red);
+            top: -100px;
+            right: -100px;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #3b82f6;
+            bottom: -50px;
+            left: -50px;
+            animation: move 15s infinite alternate-reverse;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(100px, 100px); }
+        }
+
+        .btn-primary {
+            background-color: var(--accent-red);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(227, 6, 19, 0.3);
+            filter: brightness(1.1);
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--glass-border);
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            background: white;
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+            transform: translateX(8px);
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--glass-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            background: white;
+            border-color: var(--accent-red);
+            box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-red);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="liquid-blob blob-1"></div>
+    <div class="liquid-blob blob-2"></div>
+
+    <!-- Header -->
+    <header class="w-full py-8 px-4 md:px-8 flex justify-center">
+        <img src="https://invensis.com.mk/wp-content/uploads/2023/04/cropped-cropped-cropped-logo-2ki-e1680670915655.png" 
+             alt="Invensis Logo" class="h-12 md:h-14 object-contain">
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 pb-12">
+        <div id="quiz-container" class="glass-card w-full max-w-2xl p-8 md:p-12 transition-all duration-500">
+            
+            <!-- Landing Screen -->
+            <div id="screen-landing" class="text-center fade-in">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Која Samsung клима е најсоодветна за твојот дом?</h1>
+                <p class="text-lg text-gray-600 mb-10">Одговори на неколку брзи прашања и ќе ти препорачаме идеално решение според твојот простор и навики.</p>
+                <button onclick="startQuiz()" class="btn-primary text-white font-semibold py-4 px-12 rounded-full text-lg shadow-lg">
+                    Започни
+                </button>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div id="screen-quiz" class="hidden">
+                <div class="mb-8">
+                    <div class="flex justify-between items-end mb-2">
+                        <span id="question-number" class="text-sm font-semibold text-red-600 uppercase tracking-wider">Прашање 1 од 7</span>
+                        <span id="progress-text" class="text-xs text-gray-400 font-medium">0% завршено</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div id="question-content" class="fade-in">
+                    <h2 id="question-text" class="text-2xl font-semibold text-gray-800 mb-8">Прашање се вчитува...</h2>
+                    <div id="options-container" class="space-y-3 mb-10">
+                        <!-- Options will be injected here -->
+                    </div>
+                    
+                    <div class="pt-6 border-t border-gray-100">
+                        <button id="back-button" onclick="goBack()" class="flex items-center gap-2 text-gray-400 hover:text-red-600 transition-colors font-medium">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Назад
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Form Screen -->
+            <div id="screen-contact" class="hidden fade-in">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Завршивте!</h2>
+                    <p class="text-gray-600">Оставете ги вашите податоци за да ве контактираме со идеалното решение за вашиот дом.</p>
+                </div>
+                
+                <form id="contact-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Име и презиме</label>
+                        <input type="text" id="form-name" required placeholder="Внесете го вашето име" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">E-mail адреса</label>
+                        <input type="email" id="form-email" required 
+                               pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" 
+                               placeholder="primer@mail.com" class="input-field">
+                        <p class="text-[10px] text-gray-400 mt-1">* Ве молиме внесете валидна е-маил адреса</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Телефонски број</label>
+                        <input type="tel" id="form-tel" required placeholder="07X XXX XXX" class="input-field">
+                    </div>
+                    
+                    <div class="flex items-start gap-3 py-2">
+                        <div class="flex items-center h-5">
+                            <input id="consent" type="checkbox" required class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                        </div>
+                        <label for="consent" class="text-sm text-gray-600 leading-tight cursor-pointer">
+                            Се согласувам да бидам контактиран од тимот на Invensis во врска со моите одговори и персонализирана понуда.
+                        </label>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" class="btn-primary w-full text-white font-semibold py-4 rounded-xl text-lg shadow-md">
+                            Испрати
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Screen -->
+            <div id="screen-success" class="hidden text-center fade-in">
+                <div class="mb-6 inline-flex p-4 bg-green-50 rounded-full">
+                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Успешно испратено!</h2>
+                <p class="text-gray-600 mb-8">Ви благодариме на довербата. Нашиот тим ќе ве контактира набрзо со персонализирана понуда.</p>
+                <button onclick="restartQuiz()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-8 rounded-xl transition-colors">Повтори го квизот</button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-6 text-center text-gray-400 text-sm">
+        &copy; 2026 Invensis. Сите права се задржани.
+    </footer>
+
+    <script>
+        const quizData = [
+            {
+                question: "Во кој простор ќе се користи климата најчесто?",
+                options: ["Спална соба", "Дневна соба", "Детска соба", "Канцеларија", "Цел стан / куќа"]
+            },
+            {
+                question: "Колкава е просторијата?",
+                options: ["До 25 m²", "25–40 m²", "40–60 m²", "Над 60 m²"]
+            },
+            {
+                question: "Дали ќе ја користите климата и за греење?",
+                options: ["Да, главно за греење", "Да, како дополнително греење", "Само за ладење"]
+            },
+            {
+                question: "Во каков објект ќе се постави?",
+                options: ["Новоградба", "Стара градба", "Добро изолиран", "Без изолација"]
+            },
+            {
+                question: "Што најмногу те загрижува кај климите?",
+                options: ["Директно дување во мене", "Да не им пречи на децата", "Висока сметка за струја", "Бучава"]
+            },
+            {
+                question: "Дали си имал/а непријатно искуство со клима?",
+                options: ["Да, беше премногу бучна", "Да, трошеше премногу струја", "Да, дуваше директно во нас", "Немам лошо искуство", "Никогаш не сум користел/а"]
+            },
+            {
+                question: "Кога купуваш клима, што ти е најважно?",
+                options: ["Да биде економична", "Да биде тивка", "Да биде моќна", "Да бидам сигурен/а дека не сум згрешил"]
+            }
+        ];
+
+        let currentQuestion = 0;
+        const answers = [];
+
+        function startQuiz() {
+            currentQuestion = 0;
+            answers.length = 0;
+            document.getElementById('screen-landing').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            document.getElementById('screen-contact').classList.add('hidden');
+            document.getElementById('screen-success').classList.add('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = quizData[currentQuestion];
+            const container = document.getElementById('options-container');
+            const qText = document.getElementById('question-text');
+            const qNum = document.getElementById('question-number');
+            const progFill = document.getElementById('progress-fill');
+            const progText = document.getElementById('progress-text');
+            const backBtn = document.getElementById('back-button');
+
+            qText.innerText = question.question;
+            qNum.innerText = `Прашање ${currentQuestion + 1} од ${quizData.length}`;
+            
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            progFill.style.width = `${progress}%`;
+            progText.innerText = `${Math.round(progress)}% завршено`;
+
+            backBtn.style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+
+            container.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn w-full text-left p-4 rounded-xl font-medium text-gray-700 fade-in';
+                btn.style.animationDelay = `${index * 0.05}s`;
+                btn.innerText = option;
+                btn.onclick = () => handleAnswer(option);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(answer) {
+            answers[currentQuestion] = answer;
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showContactForm();
+            }
+        }
+
+        function goBack() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function showContactForm() {
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-contact').classList.remove('hidden');
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const emailInput = document.getElementById('form-email');
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            
+            if (!emailPattern.test(emailInput.value)) {
+                emailInput.classList.add('border-red-500');
+                return;
+            }
+
+            document.getElementById('screen-contact').classList.add('hidden');
+            document.getElementById('screen-success').classList.remove('hidden');
+        }
+
+        function restartQuiz() {
+            startQuiz();
+            document.getElementById('screen-landing').classList.remove('hidden');
+            document.getElementById('screen-success').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
