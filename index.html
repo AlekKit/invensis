@@ -233,7 +233,7 @@
     </footer>
 
     <script>
-        const GAS_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyLdh-R_Qq4NDT0pq7nog2sMBp9Md8S7Q4ot63QCBhX9cb12228K9r5f6tPnRjiLcPP/exec";
 
         const quizData = [
             {
@@ -300,6 +300,7 @@
             container.innerHTML = '';
             question.options.forEach((option, index) => {
                 const btn = document.createElement('button');
+                btn.type = "button";
                 btn.className = 'option-btn w-full text-left p-4 rounded-xl font-medium text-gray-700 fade-in';
                 btn.style.animationDelay = `${index * 0.05}s`;
                 btn.innerText = option;
@@ -344,13 +345,10 @@
 
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             
-            if (!emailPattern.test(emailInput.value)) {
-                emailInput.classList.add('border-red-500');
-                return;
-            }
+            emailInput.classList.remove('border-red-500');
 
-            if (!GAS_URL || GAS_URL === "https://script.google.com/macros/s/AKfycbyLdh-R_Qq4NDT0pq7nog2sMBp9Md8S7Q4ot63QCBhX9cb12228K9r5f6tPnRjiLcPP/exec") {
-                alert("Недостасува Google Apps Script URL.");
+            if (!emailPattern.test(emailInput.value.trim())) {
+                emailInput.classList.add('border-red-500');
                 return;
             }
 
@@ -375,17 +373,14 @@
             submitButton.innerText = "Се испраќа...";
 
             try {
-                const response = await fetch(GAS_URL, {
+                await fetch(GAS_URL, {
                     method: "POST",
+                    mode: "no-cors",
                     headers: {
                         "Content-Type": "text/plain;charset=utf-8"
                     },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    throw new Error("Bad response");
-                }
 
                 document.getElementById('screen-contact').classList.add('hidden');
                 document.getElementById('screen-success').classList.remove('hidden');
@@ -398,9 +393,12 @@
         }
 
         function restartQuiz() {
-            startQuiz();
-            document.getElementById('screen-landing').classList.remove('hidden');
+            currentQuestion = 0;
+            answers.length = 0;
             document.getElementById('screen-success').classList.add('hidden');
+            document.getElementById('screen-contact').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-landing').classList.remove('hidden');
         }
     </script>
 </body>
