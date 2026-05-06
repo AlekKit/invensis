@@ -132,7 +132,6 @@
     <div class="liquid-blob blob-1"></div>
     <div class="liquid-blob blob-2"></div>
 
-    <!-- Header -->
     <header class="w-full py-8 px-4 md:px-8 flex justify-center">
         <img src="https://invensis.com.mk/wp-content/uploads/2023/04/cropped-cropped-cropped-logo-2ki-e1680670915655.png" 
              alt="Invensis Logo" class="h-12 md:h-14 object-contain">
@@ -141,7 +140,6 @@
     <main class="flex-grow flex items-center justify-center px-4 pb-12">
         <div id="quiz-container" class="glass-card w-full max-w-2xl p-8 md:p-12 transition-all duration-500">
             
-            <!-- Landing Screen -->
             <div id="screen-landing" class="text-center fade-in">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Која Samsung клима е најсоодветна за твојот дом?</h1>
                 <p class="text-lg text-gray-600 mb-10">Одговори на неколку брзи прашања и ќе ти препорачаме идеално решение според твојот простор и навики.</p>
@@ -150,7 +148,6 @@
                 </button>
             </div>
 
-            <!-- Quiz Screen -->
             <div id="screen-quiz" class="hidden">
                 <div class="mb-8">
                     <div class="flex justify-between items-end mb-2">
@@ -164,9 +161,7 @@
 
                 <div id="question-content" class="fade-in">
                     <h2 id="question-text" class="text-2xl font-semibold text-gray-800 mb-8">Прашање се вчитува...</h2>
-                    <div id="options-container" class="space-y-3 mb-10">
-                        <!-- Options will be injected here -->
-                    </div>
+                    <div id="options-container" class="space-y-3 mb-10"></div>
                     
                     <div class="pt-6 border-t border-gray-100">
                         <button id="back-button" onclick="goBack()" class="flex items-center gap-2 text-gray-400 hover:text-red-600 transition-colors font-medium">
@@ -179,7 +174,6 @@
                 </div>
             </div>
 
-            <!-- Final Form Screen -->
             <div id="screen-contact" class="hidden fade-in">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-gray-900 mb-2">Завршивте!</h2>
@@ -213,14 +207,13 @@
                     </div>
                     
                     <div class="pt-4">
-                        <button type="submit" class="btn-primary w-full text-white font-semibold py-4 rounded-xl text-lg shadow-md">
+                        <button id="submit-button" type="submit" class="btn-primary w-full text-white font-semibold py-4 rounded-xl text-lg shadow-md">
                             Испрати
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Success Screen -->
             <div id="screen-success" class="hidden text-center fade-in">
                 <div class="mb-6 inline-flex p-4 bg-green-50 rounded-full">
                     <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,6 +233,8 @@
     </footer>
 
     <script>
+        const GAS_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
+
         const quizData = [
             {
                 question: "Во кој простор ќе се користи климата најчесто?",
@@ -314,7 +309,11 @@
         }
 
         function handleAnswer(answer) {
-            answers[currentQuestion] = answer;
+            answers[currentQuestion] = {
+                question: quizData[currentQuestion].question,
+                answer: answer
+            };
+
             if (currentQuestion < quizData.length - 1) {
                 currentQuestion++;
                 showQuestion();
@@ -335,10 +334,14 @@
             document.getElementById('screen-contact').classList.remove('hidden');
         }
 
-        function handleFormSubmit(event) {
+        async function handleFormSubmit(event) {
             event.preventDefault();
             
             const emailInput = document.getElementById('form-email');
+            const nameInput = document.getElementById('form-name');
+            const phoneInput = document.getElementById('form-tel');
+            const submitButton = document.getElementById('submit-button');
+
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             
             if (!emailPattern.test(emailInput.value)) {
@@ -346,8 +349,52 @@
                 return;
             }
 
-            document.getElementById('screen-contact').classList.add('hidden');
-            document.getElementById('screen-success').classList.remove('hidden');
+            if (!GAS_URL || GAS_URL === "https://script.google.com/macros/s/AKfycbw98CVjjMYBio47Dn_USInCOiddO5719rkKDfcpQjGbjCJYxZdzyCRrWqQHtMoEcTtw/exec") {
+                alert("Недостасува Google Apps Script URL.");
+                return;
+            }
+
+            const payload = {
+                timestamp: new Date().toISOString(),
+                name: nameInput.value.trim(),
+                email: emailInput.value.trim(),
+                phone: phoneInput.value.trim(),
+                answers: JSON.stringify(answers),
+                question_1: answers[0]?.answer || "",
+                question_2: answers[1]?.answer || "",
+                question_3: answers[2]?.answer || "",
+                question_4: answers[3]?.answer || "",
+                question_5: answers[4]?.answer || "",
+                question_6: answers[5]?.answer || "",
+                question_7: answers[6]?.answer || "",
+                user_agent: navigator.userAgent,
+                referrer: document.referrer
+            };
+
+            submitButton.disabled = true;
+            submitButton.innerText = "Се испраќа...";
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Bad response");
+                }
+
+                document.getElementById('screen-contact').classList.add('hidden');
+                document.getElementById('screen-success').classList.remove('hidden');
+
+            } catch (error) {
+                alert("Грешка при испраќање. Пробај повторно.");
+                submitButton.disabled = false;
+                submitButton.innerText = "Испрати";
+            }
         }
 
         function restartQuiz() {
